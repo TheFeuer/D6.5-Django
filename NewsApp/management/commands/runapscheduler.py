@@ -13,7 +13,6 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 
-
 load_dotenv()
 env_path = Path('.')/'.env'
 load_dotenv(dotenv_path=env_path)
@@ -27,19 +26,19 @@ def news_week():
     for category in Category.objects.all():
         news_week_category = []
         week_number_last = datetime.now().isocalendar()[1] - 1
-        for news in Post.objects.filter(postCategory=category.id,
-                                        dateCreation__week=week_number_last).values('id',
+        for newsApp in Post.objects.filter(postCategory=category.id,
+                                            dateCreation__week=week_number_last).values('pk',
                                                                                     'title',
                                                                                     'dateCreation',
                                                                                     'postCategory__name'):
-            date_format = news.get("dateCreation").strftime("%m/%d/%Y")
-            new = (f' http://127.0.0.1:8000/news/{news.get("pk")}, {news.get("title")}, '
-                   f'Категория: {news.get("postCategory__name")}, Дата создания: {date_format}')
+            date_format = newsApp.get("dateCreation").strftime("%m/%d/%Y")
+            new = (f' http://127.0.0.1:8000/news/{newsApp.get("pk")}, {newsApp.get("title")}, '
+                   f'Категория: {newsApp.get("postCategory__name")}, Дата создания: {date_format}')
             news_week_category.append(new)
 
         subscribers = category.subscribers.all()
-
         for subscriber in subscribers:
+
             html_content = render_to_string(
                 'week.html', {'user': subscriber,
                                      'text': news_week_category,
@@ -54,8 +53,8 @@ def news_week():
             )
 
             msg.attach_alternative(html_content, 'text/html')
-
-            # msg.send()
+            #print(html_content)
+            msg.send()
 
 
 def delete_old_job_executions(max_age=604_800):
@@ -72,7 +71,7 @@ class Command(BaseCommand):
         scheduler.add_job(
             news_week,
 
-            trigger=CronTrigger(second="*/10"),
+            trigger=CronTrigger(week="*/1"),
             id="news_week",
             max_instances=1,
             replace_existing=True,
